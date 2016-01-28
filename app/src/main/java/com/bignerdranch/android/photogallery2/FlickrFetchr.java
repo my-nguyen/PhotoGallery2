@@ -3,11 +3,17 @@ package com.bignerdranch.android.photogallery2;
 import android.net.Uri;
 import android.util.Log;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by My on 1/27/2016.
@@ -49,7 +55,8 @@ public class FlickrFetchr {
       return new String(getUrlBytes(urlSpec));
    }
 
-   public void fetchItems() {
+   public List<GalleryItem> fetchItems() {
+      List<GalleryItem> items = new ArrayList<>();
       try {
          // use Uri.Builder to build the complete URL for the Flickr API request. values are added
          // for the parameters method, api_key, format, nojsoncallback, and extras. value url_s for
@@ -65,9 +72,39 @@ public class FlickrFetchr {
                .build().toString();
          String jsonString = getUrlString(url);
          Log.i(TAG, "Received JSON: " + jsonString);
+         // parse jsonString into an object hierarchy that maps to the original JSON text
+         JSONObject jsonBody = new JSONObject(jsonString);
+         parseItems(items, jsonBody);
+      }
+      catch (JSONException je) {
+         Log.e(TAG, "Failed to parse JSON", je);
       }
       catch (IOException ioe) {
          Log.e(TAG, "Failed to fetch items", ioe);
+      }
+
+      return items;
+   }
+
+   private void parseItems(List<GalleryItem> items, JSONObject jsonBody) throws IOException, JSONException {
+      // the top-level JSONObject maps to the outermost curly braces in the JSON string. this top-
+      // level object contains a nested JSONObject named photos.
+      JSONObject photosJsonObject = jsonBody.getJSONObject("photos");
+      // within the nested JSONObject is a JSONArray named photo
+      JSONArray photoJsonArray = photosJsonObject.getJSONArray("photo");
+      // this JSONArray contains a collection of JSONObject's, each representing metadata for one photo
+      for (int i = 0; i < photoJsonArray.length(); i++) {
+         JSONObject photoJsonObject = photoJsonArray.getJSONObject(i);
+         // create a GalleryItem for each photo
+         GalleryItem item = new GalleryItem();
+         item.setId(photoJsonObject.getString("id"));
+         item.setCaption(photoJsonObject.getString("title"));
+         // ignore images that do not have an image url
+         if (photoJsonObject.has("url_s")) {
+            item.setUrl(photoJsonObject.getString("url_s"));
+            // add GalleryItem to a list
+            items.add(item);
+         }
       }
    }
 }
