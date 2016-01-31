@@ -6,11 +6,11 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,8 +19,12 @@ import java.util.List;
  * Created by My on 1/27/2016.
  */
 public class PhotoGalleryFragment extends Fragment {
-   private RecyclerView       mPhotoRecyclerView;
-   private List<GalleryItem>  mItems = new ArrayList<>();
+   private RecyclerView                      mPhotoRecyclerView;
+   private List<GalleryItem>                 mItems = new ArrayList<>();
+   // the generic argument specifies the type of the object that will be used as the identifier for
+   // your download. in this case, the PhotoHolder makes for a convenient identifier as it is also
+   // the target where the downloaded images will eventually go.
+   private ThumbnailDownloader<PhotoHolder>  mThumbnailDownloader;
    private static final String   TAG = "PhotoGalleryFragment";
 
    public static PhotoGalleryFragment newInstance() {
@@ -34,6 +38,12 @@ public class PhotoGalleryFragment extends Fragment {
       setRetainInstance(true);
       // start the AsyncTask, which will fire up its background thread and call doInBackGround()
       new FetchItemsTask().execute();
+      // create a ThumbnailDownloader thread and start it
+      mThumbnailDownloader = new ThumbnailDownloader<>();
+      mThumbnailDownloader.start();
+      // call getLooper() after start() to ensure the thread's guts are ready before proceeding
+      mThumbnailDownloader.getLooper();
+      Log.i(TAG, "Background thread started");
    }
 
    @Override
@@ -46,6 +56,14 @@ public class PhotoGalleryFragment extends Fragment {
       setupAdapter();
 
       return view;
+   }
+
+   @Override
+   public void onDestroy() {
+      super.onDestroy();
+      // it's critical to call quit() to terminate the thread; otherwise the thread never dies.
+      mThumbnailDownloader.quit();
+      Log.i(TAG, "Background thread destroyed");
    }
 
    private void setupAdapter() {
@@ -89,6 +107,9 @@ public class PhotoGalleryFragment extends Fragment {
          GalleryItem item = mGalleryItems.get(position);
          Drawable drawable = getResources().getDrawable(R.drawable.bill_up_close);
          holder.bindDrawable(drawable);
+         // call the thread’s queueThumbnail() method and pass in the target PhotoHolder where the
+         // image will ultimately be placed and the GalleryItem’s URL to download from.
+         mThumbnailDownloader.queueThumbnail(holder, item.getUrl());
       }
 
       @Override
