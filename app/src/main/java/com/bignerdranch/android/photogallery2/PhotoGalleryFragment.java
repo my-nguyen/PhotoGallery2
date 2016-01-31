@@ -1,5 +1,6 @@
 package com.bignerdranch.android.photogallery2;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -47,6 +48,10 @@ public class PhotoGalleryFragment extends Fragment {
       setHasOptionsMenu(true);
       // start the AsyncTask, which will fire up its background thread and call doInBackGround()
       updateItems();
+
+      // start PollService
+      Intent intent = PollService.newIntent(getActivity());
+      getActivity().startService(intent);
 
       // by default, the Handler will attach itself to the Looper of the current thread. since this
       // Handler is created in onCreate(), it'll be attached to the main thread's Looper.
