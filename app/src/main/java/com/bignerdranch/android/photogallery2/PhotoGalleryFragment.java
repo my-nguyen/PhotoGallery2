@@ -102,10 +102,13 @@ public class PhotoGalleryFragment extends Fragment {
          // passed as input. this is where you will launch a FetchItemsTask to query for new results
          public boolean onQueryTextSubmit(String query) {
             Log.d(TAG, "QueryTextSubmit: " + query);
+            // update the stored query whenever the user submits a new query
+            QueryPreferences.setStoredQuery(getContext(), query);
             updateItems();
             // returning true signifies to the system that the search request has been handled
             return true;
          }
+
          @Override
          // this callback is executed any time every time a single character changes in the
          // SearchView text box. do nothing here except log the input string.
@@ -116,6 +119,20 @@ public class PhotoGalleryFragment extends Fragment {
       });
    }
 
+   @Override
+   public boolean onOptionsItemSelected(MenuItem item) {
+      switch (item.getItemId()) {
+         // the user selects the Clear Search item from the overflow menu
+         case R.id.menu_item_clear:
+            // clear the stored query whenever
+            QueryPreferences.setStoredQuery(getActivity(), null);
+            // ensure the images displayed in the RecyclerView reflect the most recent search query
+            updateItems();
+            return true;
+         default:
+            return onOptionsItemSelected(item);
+      }
+   }
    @Override
    public void onDestroyView() {
       super.onDestroyView();
@@ -141,7 +158,9 @@ public class PhotoGalleryFragment extends Fragment {
    }
 
    private void updateItems() {
-      new FetchItemsTask().execute();
+      // use the stored query and not the previously hardcoded string
+      String query = QueryPreferences.getStoredQuery(getActivity());
+      new FetchItemsTask(query).execute();
    }
 
    private class PhotoHolder extends RecyclerView.ViewHolder {
@@ -188,13 +207,17 @@ public class PhotoGalleryFragment extends Fragment {
    }
 
    private class FetchItemsTask extends AsyncTask<Void, Void, List<GalleryItem>> {
+      private String mQuery;
+
+      public FetchItemsTask(String query) {
+         mQuery = query;
+      }
+
       @Override
       // this method is run in the background thread. it returns a List of GalleryItem's from Flickr
       protected List<GalleryItem> doInBackground(Void... params) {
          FlickrFetchr fetcher = new FlickrFetchr();
-         // just for testing
-         String query = "Messi";
-         return query == null ? fetcher.fetchRecentPhotos() : fetcher.searchPhotos(query);
+         return mQuery == null ? fetcher.fetchRecentPhotos() : fetcher.searchPhotos(mQuery);
       }
 
       @Override
