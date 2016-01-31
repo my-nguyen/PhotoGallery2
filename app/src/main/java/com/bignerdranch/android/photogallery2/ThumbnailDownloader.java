@@ -15,7 +15,8 @@ import java.util.concurrent.ConcurrentMap;
  * Created by My on 1/30/2016.
  */
 // this class is another background thread but works differently than AsyncTask in that it's more
-// suited for repetitive and long-running tasks. here the task is to download 100 thumbnail pictures
+// suited for repetitive and long-running tasks, whereas AsyncTask is designed for work that is
+// short lived and not repeated too often. here the task is to download 100 thumbnail pictures
 // from Flickr in order to display them on the screen.
 // this class expects a generic argument <T>. its user is PhotoGalleryFragment, which will need
 // to use some object to identify each download and to determine which UI element to update with the
@@ -36,15 +37,34 @@ public class ThumbnailDownloader<T> extends HandlerThread {
    // the Handler responsible for queueing download requests as messages onto the ThumbnailDownloader
    // background thread. this handler will also be in charge of processing download request messages
    // when they are pulled off the queue.
-   private Handler                     mRequestHandler;
+   private Handler                        mRequestHandler;
+   // the Handler attached to the main thread's Looper.
+   private Handler                        mResponseHandler;
    // using a download request’s identifying object of type T as a key, you can store and
    // retrieve the URL associated with a particular request. (in this case, the identifying object
    // is a PhotoHolder, so the request response can be easily routed back to the UI element where
    // the downloaded image should be placed.)
-   private ConcurrentMap<T, String>    mRequestMap = new ConcurrentHashMap<>();
+   private ConcurrentMap<T, String>       mRequestMap = new ConcurrentHashMap<>();
+   private ThumbnailDownloadListener<T>   mThumbnailDownloadListener;
 
-   public ThumbnailDownloader() {
+   // this interface/listener delegates the responsibility of what to do with the downloaded image
+   // to a class other than ThumbnailDownloader (in this case, PhotoGalleryFragment). doing so
+   // separates the downloading task from the UI updating task (putting images into ImageView's),
+   // so that ThumbnailDownloader could be used for downloading into other kinds of View objects as
+   // needed.
+   public interface ThumbnailDownloadListener<T> {
+      // this method will be called when an image has been fully downloaded and is ready to be added
+      // to the UI.
+      void onThumbnailDownloaded(T target, Bitmap thumbnail);
+   }
+
+   public void setThumbnailDownloadListener(ThumbnailDownloadListener<T> listener) {
+      mThumbnailDownloadListener = listener;
+   }
+
+   public ThumbnailDownloader(Handler responseHandler) {
       super(TAG);
+      mResponseHandler = responseHandler;
    }
 
    @Override
@@ -94,6 +114,11 @@ public class ThumbnailDownloader<T> extends HandlerThread {
       }
    }
 
+   // clean all the requests out of the queue
+   public void clearQueue() {
+      mRequestHandler.removeMessages(MESSAGE_DOWNLOAD);
+   }
+
    // this helper method uses FlickrFetchr to download bytes from the URL and then turns these bytes
    // into a bitmap
    private void handleRequest(final T target) {
@@ -106,6 +131,28 @@ public class ThumbnailDownloader<T> extends HandlerThread {
             // use BitmapFactory to construct a bitmap with the array of bytes returned from getUrlBytes()
             final Bitmap bitmap = BitmapFactory.decodeByteArray(bitmapBytes, 0, bitmapBytes.length);
             Log.i(TAG, "Bitmap created");
+
+            // Handler.post(Runnable) is a convenience method for posting Message's. internally
+            // Message.callback is set to Runnable, so that when a Message is pulled off the queue,
+            // Android will call the run() method defined in Runnable.
+            mResponseHandler.post(new Runnable() {
+               @Override
+               // because mResponseHandler is associated with the main thread's Looper, this method
+               // will be executed on the main thread
+               public void run() {
+                  // double-check the requestMap. this is necessary because the RecyclerView
+                  // recycles its views. by the time ThumbnailDownloader finishes downloading the
+                  // Bitmap, RecyclerView may have recycled the PhotoHolder and requested a
+                  // different URL for it. this check ensures that each PhotoHolder gets the correct
+                  // image, even if another request has been made in the meantime.
+                  if (mRequestMap.get(target) == url) {
+                     // remove the PhotoHolder-URL mapping from the requestMap
+                     mRequestMap.remove(target);
+                     // set the bitmap on the target PhotoHolder
+                     mThumbnailDownloadListener.onThumbnailDownloaded(target, bitmap);
+                  }
+               }
+            });
          }
       }
       catch (IOException ioe) {

@@ -1,8 +1,11 @@
 package com.bignerdranch.android.photogallery2;
 
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -38,8 +41,27 @@ public class PhotoGalleryFragment extends Fragment {
       setRetainInstance(true);
       // start the AsyncTask, which will fire up its background thread and call doInBackGround()
       new FetchItemsTask().execute();
-      // create a ThumbnailDownloader thread and start it
-      mThumbnailDownloader = new ThumbnailDownloader<>();
+
+      // by default, the Handler will attach itself to the Looper of the current thread. since this
+      // Handler is created in onCreate(), it'll be attached to the main thread's Looper.
+      Handler responseHandler = new Handler();
+      // create a ThumbnailDownloader thread, passing a Handler attached to main thread to
+      // ThumbnailDownloader thread
+      mThumbnailDownloader = new ThumbnailDownloader<>(responseHandler);
+      // implement the ThumbnailDownloadListener interface
+      mThumbnailDownloader.setThumbnailDownloadListener(
+            new ThumbnailDownloader.ThumbnailDownloadListener<PhotoHolder>() {
+               @Override
+               // this method does the UI work with the downloaded bitmap
+               public void onThumbnailDownloaded(PhotoHolder target, Bitmap thumbnail) {
+                  Drawable drawable = new BitmapDrawable(getResources(), thumbnail);
+                  // set the Drawable of the originally requested PhotoHolder to the newly downloaded
+                  // Bitmap
+                  target.bindDrawable(drawable);
+               }
+            }
+      );
+      // start the ThumbnailDownloader thread
       mThumbnailDownloader.start();
       // call getLooper() after start() to ensure the thread's guts are ready before proceeding
       mThumbnailDownloader.getLooper();
@@ -56,6 +78,13 @@ public class PhotoGalleryFragment extends Fragment {
       setupAdapter();
 
       return view;
+   }
+
+   @Override
+   public void onDestroyView() {
+      super.onDestroyView();
+      // clean out the downloader when the view is destroyed
+      mThumbnailDownloader.clearQueue();
    }
 
    @Override
