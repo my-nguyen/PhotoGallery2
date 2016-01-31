@@ -1,9 +1,12 @@
 package com.bignerdranch.android.photogallery2;
 
+import android.app.AlarmManager;
 import android.app.IntentService;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
+import android.os.SystemClock;
 import android.util.Log;
 
 import java.util.List;
@@ -15,10 +18,29 @@ import java.util.List;
 // activity and responds to intents. a service's intents are called commands. each command is an
 // instruction to the service to do something.
 public class PollService extends IntentService {
-   private static final String TAG = "PollService";
+   private static final String   TAG = "PollService";
+   // 60 seconds
+   private static final int      POLL_INTERVAL = 1000 * 60;
 
    public static Intent newIntent(Context context) {
       return new Intent(context, PollService.class);
+   }
+
+   public static void setServiceAlarm(Context context, boolean on) {
+      Intent intent = PollService.newIntent(context);
+      // construct a PendingIntent that starts a PollService via
+      // getService(Context, request-code, Intent, flags);
+      PendingIntent pendingIntent = PendingIntent.getService(context, 0, intent, 0);
+      AlarmManager alarmManager = (AlarmManager)context.getSystemService(context.ALARM_SERVICE);
+      if (on)
+         // set alarm via setInexactRepeating(time-basis, start-time, repeat-interval, PendingIntent);
+         alarmManager.setInexactRepeating(AlarmManager.ELAPSED_REALTIME,
+               SystemClock.elapsedRealtime(), POLL_INTERVAL, pendingIntent);
+      else {
+         // cancel the alarm and the PendingIntent
+         alarmManager.cancel(pendingIntent);
+         pendingIntent.cancel();
+      }
    }
 
    public PollService() {

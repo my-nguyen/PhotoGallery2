@@ -49,9 +49,8 @@ public class PhotoGalleryFragment extends Fragment {
       // start the AsyncTask, which will fire up its background thread and call doInBackGround()
       updateItems();
 
-      // start PollService
-      Intent intent = PollService.newIntent(getActivity());
-      getActivity().startService(intent);
+      // start PollService via PendingIntent
+      PollService.setServiceAlarm(getActivity(), true);
 
       // by default, the Handler will attach itself to the Looper of the current thread. since this
       // Handler is created in onCreate(), it'll be attached to the main thread's Looper.
