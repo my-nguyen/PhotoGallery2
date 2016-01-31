@@ -9,10 +9,12 @@ import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -44,7 +46,7 @@ public class PhotoGalleryFragment extends Fragment {
       // turn on toolbar menu by registering the fragment to receive menu callbacks
       setHasOptionsMenu(true);
       // start the AsyncTask, which will fire up its background thread and call doInBackGround()
-      new FetchItemsTask().execute();
+      updateItems();
 
       // by default, the Handler will attach itself to the Looper of the current thread. since this
       // Handler is created in onCreate(), it'll be attached to the main thread's Looper.
@@ -89,6 +91,29 @@ public class PhotoGalleryFragment extends Fragment {
       super.onCreateOptionsMenu(menu, inflater);
       // inflate the menu XML just created
       inflater.inflate(R.menu.fragment_photo_gallery, menu);
+
+      // pull the MenuItem representing the search box from the menu
+      MenuItem searchItem = menu.findItem(R.id.menu_item_search);
+      // pull the SearchView object from searchItem using the getActionView() method.
+      final SearchView searchView = (SearchView)searchItem.getActionView();
+      searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+         @Override
+         // this callback is executed when the user submits a query. the query the user submitted is
+         // passed as input. this is where you will launch a FetchItemsTask to query for new results
+         public boolean onQueryTextSubmit(String query) {
+            Log.d(TAG, "QueryTextSubmit: " + query);
+            updateItems();
+            // returning true signifies to the system that the search request has been handled
+            return true;
+         }
+         @Override
+         // this callback is executed any time every time a single character changes in the
+         // SearchView text box. do nothing here except log the input string.
+         public boolean onQueryTextChange(String newText) {
+            Log.d(TAG, "QueryTextChange: " + newText);
+            return false;
+         }
+      });
    }
 
    @Override
@@ -113,6 +138,10 @@ public class PhotoGalleryFragment extends Fragment {
       if (isAdded())
          // set up an Adapter based on the list of GalleryItem's
          mPhotoRecyclerView.setAdapter(new PhotoAdapter(mItems));
+   }
+
+   private void updateItems() {
+      new FetchItemsTask().execute();
    }
 
    private class PhotoHolder extends RecyclerView.ViewHolder {
