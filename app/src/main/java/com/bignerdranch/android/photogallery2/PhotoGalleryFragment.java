@@ -11,6 +11,8 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -39,6 +41,8 @@ public class PhotoGalleryFragment extends Fragment {
       super.onCreate(savedInstanceState);
       // retain the PhotoGalleryFragment instance across rotation
       setRetainInstance(true);
+      // turn on toolbar menu by registering the fragment to receive menu callbacks
+      setHasOptionsMenu(true);
       // start the AsyncTask, which will fire up its background thread and call doInBackGround()
       new FetchItemsTask().execute();
 
@@ -78,6 +82,13 @@ public class PhotoGalleryFragment extends Fragment {
       setupAdapter();
 
       return view;
+   }
+
+   @Override
+   public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+      super.onCreateOptionsMenu(menu, inflater);
+      // inflate the menu XML just created
+      inflater.inflate(R.menu.fragment_photo_gallery, menu);
    }
 
    @Override
