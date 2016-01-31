@@ -151,7 +151,10 @@ public class PhotoGalleryFragment extends Fragment {
       @Override
       // this method is run in the background thread. it returns a List of GalleryItem's from Flickr
       protected List<GalleryItem> doInBackground(Void... params) {
-         return new FlickrFetchr().fetchItems();
+         FlickrFetchr fetcher = new FlickrFetchr();
+         // just for testing
+         String query = "Messi";
+         return query == null ? fetcher.fetchRecentPhotos() : fetcher.searchPhotos(query);
       }
 
       @Override
