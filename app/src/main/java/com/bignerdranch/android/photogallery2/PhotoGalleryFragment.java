@@ -49,9 +49,6 @@ public class PhotoGalleryFragment extends Fragment {
       // start the AsyncTask, which will fire up its background thread and call doInBackGround()
       updateItems();
 
-      // start PollService via PendingIntent
-      PollService.setServiceAlarm(getActivity(), true);
-
       // by default, the Handler will attach itself to the Looper of the current thread. since this
       // Handler is created in onCreate(), it'll be attached to the main thread's Looper.
       Handler responseHandler = new Handler();
@@ -131,6 +128,11 @@ public class PhotoGalleryFragment extends Fragment {
             searchView.setQuery(query, false);
          }
       });
+
+      // check whether the alarm is on and change the text of menu_item_toggle_polling to show the
+      // appropriate label to the user
+      MenuItem toggleItem = menu.findItem(R.id.menu_item_toggle_polling);
+      toggleItem.setTitle(PollService.isServiceAlarmOn(getActivity()) ? R.string.stop_polling : R.string.start_polling);
    }
 
    @Override
@@ -142,6 +144,13 @@ public class PhotoGalleryFragment extends Fragment {
             QueryPreferences.setStoredQuery(getActivity(), null);
             // ensure the images displayed in the RecyclerView reflect the most recent search query
             updateItems();
+            return true;
+         case R.id.menu_item_toggle_polling:
+            // toggle the alarm on and off
+            boolean startAlarm = !PollService.isServiceAlarmOn(getActivity());
+            PollService.setServiceAlarm(getActivity(), startAlarm);
+            // tell PhotoGalleryActivity to update its toolbar options menu.
+            getActivity().invalidateOptionsMenu();
             return true;
          default:
             return onOptionsItemSelected(item);
