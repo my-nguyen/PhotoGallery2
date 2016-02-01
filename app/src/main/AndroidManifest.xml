@@ -1,12 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.bignerdranch.android.photogallery2" >
+    <!-- create a custom permission to prevent other apps from listening to private broadcast from
+     this app, with protection level of signature -->
+    <permission
+        android:name="com.bignerdranch.android.photogallery.PRIVATE"
+        android:protectionLevel="signature"/>
     <!-- ask Android for permission to access the internet -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <!-- need to acquire ACCESS_NETWORK_STATE permission in order to use getActiveNetworkInfo() -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <!-- permission required for StartupReceiver service below -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <!-- use the private permission defined above -->
+    <uses-permission android:name="com.bignerdranch.android.photogallery.PRIVATE"/>
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -23,9 +30,23 @@
         <service android:name=".PollService" />
         <!-- register StartupReceiver as a standalone receiver that listens for the BOOT_COMPLETED
          action, which the system sends out whenever the device is turned on -->
-        <receiver android:name=".StartupReceiver">
+        <receiver
+            android:name=".StartupReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
+            </intent-filter>
+        </receiver>
+        <!-- register NotificationReceiver. since it's only used by this app, it needs to remain
+         invisible to other apps via exported=false -->
+        <receiver
+            android:name=".NotificationReceiver"
+            android:exported="false">
+            <!-- assign the lowest-possible user-defined priority to ensure NotificationReceiver
+             receives the broadcast after your dynamically registered receiver -->
+            <intent-filter
+                android:priority="-999">
+                <action
+                    android:name="com.bignerdranch.android.photogallery.SHOW_NOTIFICATION"/>
             </intent-filter>
         </receiver>
     </application>

@@ -1,10 +1,12 @@
 package com.bignerdranch.android.photogallery2;
 
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.widget.Toast;
 
 /**
@@ -21,8 +23,9 @@ public abstract class VisibleFragment extends Fragment {
       // create a new IntentFilter, which is equivalent to the following in the manifest:
       // <intent-filter> <action android:name="com.bignerdranch.android.photogallery.SHOW_NOTIFICATION" /> </intent-filter>
       IntentFilter filter = new IntentFilter(PollService.ACTION_SHOW_NOTIFICATION);
-      // register this dynamic broadcast receiver in code and not in the manifest
-      getActivity().registerReceiver(mOnShowNotification, filter);
+      // register this dynamic broadcast receiver in code and not in the manifest. this receiver
+      // only listens to permission PollService.PERM_PRIVATE
+      getActivity().registerReceiver(mOnShowNotification, filter, PollService.PERM_PRIVATE, null);
    }
 
    @Override
@@ -36,7 +39,10 @@ public abstract class VisibleFragment extends Fragment {
    private BroadcastReceiver mOnShowNotification = new BroadcastReceiver() {
       @Override
       public void onReceive(Context context, Intent intent) {
-         Toast.makeText(getActivity(), "Got a broadcast: " + intent.getAction(), Toast.LENGTH_LONG).show();
+         // if we receive this, we're visible, so cancel the notification
+         Log.i(TAG, "canceling notification");
+         // only result code is necessary to signal here
+         setResultCode(Activity.RESULT_CANCELED);
       }
    };
 }

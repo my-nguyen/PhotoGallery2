@@ -1,5 +1,6 @@
 package com.bignerdranch.android.photogallery2;
 
+import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.IntentService;
 import android.app.Notification;
@@ -27,6 +28,10 @@ public class PollService extends IntentService {
    // private static final long     POLL_INTERVAL = AlarmManager.INTERVAL_FIFTEEN_MINUTES;
    // define unique action constant for sendBroadCast(Intent)
    public static final String    ACTION_SHOW_NOTIFICATION = "com.bignerdranch.android.photogallery.SHOW_NOTIFICATION";
+   // use the private permission defined in the manifest
+   public static final String    PERM_PRIVATE = "com.bignerdranch.android.photogallery.PRIVATE";
+   public static final String    REQUEST_CODE = "REQUEST_CODE";
+   public static final String    NOTIFICATION = "NOTIFICATION";
 
    public static Intent newIntent(Context context) {
       return new Intent(context, PollService.class);
@@ -112,13 +117,8 @@ public class PollService extends IntentService {
                      // user presses it
                      .setAutoCancel(true)
                      .build();
-               // get an instance of NotificationManagerCompat from the current context
-               NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
-               // post the notification
-               notificationManager.notify(0, notification);
-               // send a unique broadcast intent notifying interested components that a new search
-               // results notification is ready to post
-               sendBroadcast(new Intent(ACTION_SHOW_NOTIFICATION));
+               // send an ordered broadcast
+               showBackgroundNotification(0, notification);
             }
             // store the first result back in SharedPreferences.
             QueryPreferences.setLastResultId(this, resultId);
@@ -131,5 +131,13 @@ public class PollService extends IntentService {
       boolean isNetworkAvailable = connectivity.getActiveNetworkInfo() != null;
       boolean isNetworkConnected = connectivity.getActiveNetworkInfo().isConnected();
       return isNetworkAvailable && isNetworkConnected;
+   }
+
+   private void showBackgroundNotification(int requestCode, Notification notification) {
+      Intent intent = new Intent(ACTION_SHOW_NOTIFICATION);
+      intent.putExtra(REQUEST_CODE, requestCode);
+      intent.putExtra(NOTIFICATION, notification);
+      // sendOrderedBroadcast(Intent, String, result-receiver, Handler, initial-values, result-data, result-extras)
+      sendOrderedBroadcast(intent, PERM_PRIVATE, null, null, Activity.RESULT_OK, null, null);
    }
 }
