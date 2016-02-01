@@ -26,7 +26,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".PhotoPageActivity"/>
+        <!-- new PhotoPageActivity; tell it to handle its own configuration when the keyboard is
+         open or closed, due to an orientation change, or due to the screen size change -->
+        <activity
+            android:name=".PhotoPageActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize"/>
         <!-- declare PollService -->
         <service android:name=".PollService" />
         <!-- register StartupReceiver as a standalone receiver that listens for the BOOT_COMPLETED
