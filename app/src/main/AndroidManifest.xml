@@ -26,6 +26,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".PhotoPageActivity"/>
         <!-- declare PollService -->
         <service android:name=".PollService" />
         <!-- register StartupReceiver as a standalone receiver that listens for the BOOT_COMPLETED
