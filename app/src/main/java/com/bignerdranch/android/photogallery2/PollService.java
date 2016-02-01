@@ -3,7 +3,6 @@ package com.bignerdranch.android.photogallery2;
 import android.app.AlarmManager;
 import android.app.IntentService;
 import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
@@ -24,8 +23,8 @@ import java.util.List;
 // instruction to the service to do something.
 public class PollService extends IntentService {
    private static final String   TAG = "PollService";
-   // 60 seconds
-   private static final int      POLL_INTERVAL = 1000 * 60;
+   // private static final int      POLL_INTERVAL = 1000 * 60; // 60 seconds
+   private static final int      POLL_INTERVAL = AlarmManager.INTERVAL_FIFTEEN_MINUTES;
 
    public static Intent newIntent(Context context) {
       return new Intent(context, PollService.class);
