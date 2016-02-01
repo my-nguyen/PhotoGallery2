@@ -1,5 +1,7 @@
 package com.bignerdranch.android.photogallery2;
 
+import android.net.Uri;
+
 /**
  * Created by My on 1/27/2016.
  */
@@ -7,10 +9,16 @@ public class GalleryItem {
    private String    mCaption;
    private String    mId;
    private String    mUrl;
+   private String    mOwner;
 
    @Override
    public String toString() {
       return mCaption;
+   }
+
+   // this method generates photo page URL
+   public Uri getPhotoPageUri() {
+      return Uri.parse("http://www.flickr.com/photos").buildUpon().appendPath(mOwner).appendPath(mId).build();
    }
 
    public String getCaption() {
@@ -27,6 +35,14 @@ public class GalleryItem {
 
    public void setId(String id) {
       mId = id;
+   }
+
+   public String getOwner() {
+      return mOwner;
+   }
+
+   public void setOwner(String owner) {
+      mOwner = owner;
    }
 
    public String getUrl() {

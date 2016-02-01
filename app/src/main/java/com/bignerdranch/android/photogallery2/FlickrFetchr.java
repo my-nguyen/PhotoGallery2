@@ -121,6 +121,8 @@ public class FlickrFetchr {
          // ignore images that do not have an image url
          if (photoJsonObject.has("url_s")) {
             item.setUrl(photoJsonObject.getString("url_s"));
+            // read in the owner attribute
+            item.setOwner(photoJsonObject.getString("owner"));
             // add GalleryItem to a list
             items.add(item);
          }
