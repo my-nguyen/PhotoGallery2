@@ -25,6 +25,8 @@ public class PollService extends IntentService {
    private static final String   TAG = "PollService";
    private static final int      POLL_INTERVAL = 1000 * 60; // 60 seconds
    // private static final long     POLL_INTERVAL = AlarmManager.INTERVAL_FIFTEEN_MINUTES;
+   // define unique action constant for sendBroadCast(Intent)
+   public static final String    ACTION_SHOW_NOTIFICATION = "com.bignerdranch.android.photogallery.SHOW_NOTIFICATION";
 
    public static Intent newIntent(Context context) {
       return new Intent(context, PollService.class);
@@ -114,6 +116,9 @@ public class PollService extends IntentService {
                NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
                // post the notification
                notificationManager.notify(0, notification);
+               // send a unique broadcast intent notifying interested components that a new search
+               // results notification is ready to post
+               sendBroadcast(new Intent(ACTION_SHOW_NOTIFICATION));
             }
             // store the first result back in SharedPreferences.
             QueryPreferences.setLastResultId(this, resultId);

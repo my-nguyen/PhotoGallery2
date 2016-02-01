@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * Created by My on 1/27/2016.
  */
-public class PhotoGalleryFragment extends Fragment {
+public class PhotoGalleryFragment extends VisibleFragment {
    private RecyclerView                      mPhotoRecyclerView;
    private List<GalleryItem>                 mItems = new ArrayList<>();
    // the generic argument specifies the type of the object that will be used as the identifier for
