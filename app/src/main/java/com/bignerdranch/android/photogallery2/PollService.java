@@ -23,8 +23,8 @@ import java.util.List;
 // instruction to the service to do something.
 public class PollService extends IntentService {
    private static final String   TAG = "PollService";
-   // private static final int      POLL_INTERVAL = 1000 * 60; // 60 seconds
-   private static final long      POLL_INTERVAL = AlarmManager.INTERVAL_FIFTEEN_MINUTES;
+   private static final int      POLL_INTERVAL = 1000 * 60; // 60 seconds
+   // private static final long     POLL_INTERVAL = AlarmManager.INTERVAL_FIFTEEN_MINUTES;
 
    public static Intent newIntent(Context context) {
       return new Intent(context, PollService.class);
@@ -58,6 +58,9 @@ public class PollService extends IntentService {
          alarmManager.cancel(pendingIntent);
          pendingIntent.cancel();
       }
+
+      // write to SharedPreferences when the alarm is set
+      QueryPreferences.setAlarmOn(context, on);
    }
 
    // this method uses PendingIntent.FLAG_NO_CREATE to tell whether the alarm is on or not.
